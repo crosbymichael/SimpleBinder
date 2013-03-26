@@ -30,13 +30,11 @@ namespace SimpleBinder
             foreach (var property in properties)
             {
                 string name = ("{" + property.Name + "}");
-                if (property.PropertyType == typeof(String))
+                if (buffer.Contains(name))
                 {
-                    if (buffer.Contains(name))
-                    {
-                        string value = property.GetValue(values, null) as string;
-                        buffer = buffer.Replace(name, value);
-                    }
+                    object value = property.GetValue(values, null);
+                    var stringValue = value != null ? value.ToString() : string.Empty;
+                    buffer = buffer.Replace(name, stringValue);
                 }
             }
             return buffer;

@@ -7,6 +7,6 @@ namespace SimpleBinder
 {
     public interface IValueProvider
     {
-        string GetValue(BindingContext bindingContext, ModelContext modelContext);
+        object GetValue(BindingContext bindingContext, ModelContext modelContext);
     }
 }

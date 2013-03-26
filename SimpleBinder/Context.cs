@@ -89,7 +89,6 @@ namespace SimpleBinder
         public ListBindingContext(
             BindingContext context,
             string template,
-            string propertyName,
             Iterator iterator)
         {
             if (string.IsNullOrEmpty(template))
@@ -99,12 +98,10 @@ namespace SimpleBinder
             this.ValueProvider = context.ValueProvider;
 
             this.template = template;
-            this.PropertyName = propertyName;
             this.iterator = iterator;
         }
 
         public int Iteration { get { return this.iterator.CurrentIteration; } }
-        public string PropertyName { get; private set; }
 
         public override string GetKey(
             ModelContext context)
@@ -113,7 +110,6 @@ namespace SimpleBinder
                 this.template,
                 new 
                 { 
-                    propertyName = this.PropertyName,
                     iteration = this.Iteration,
                     contextName = context.Name
                 });

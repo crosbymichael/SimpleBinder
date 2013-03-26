@@ -9,37 +9,54 @@ namespace SimpleBinder.ModelBinder
     class ComplexModelBinder : IModelBinder
     {
         public ComplexModelBinder()
-        { 
-            
+        {
+
         }
 
         public object BindModel(
-            BindingContext bindingContext, 
+            BindingContext bindingContext,
             ModelContext modelContext)
         {
             var properties = GetProperties(modelContext.ModelType);
+            int totalProperties = properties.Count();
+            int nullProperties = 0;
 
             var instance = Activator.CreateInstance(modelContext.ModelType);
+            object value = null;
 
             foreach (var property in properties)
-            { 
-                var context = new PropertyContext{
+            {
+                var context = new PropertyContext
+                {
                     Property = property
                 };
+
                 var binder = ModelBinders.Binders.GetBinder(context);
-                var value = binder.BindModel(bindingContext, context);
+                if (binder != null)
+                {
+                    value = binder.BindModel(bindingContext, context);
+                }
+                else
+                {
+                    value = bindingContext.ValueProvider.GetValue(bindingContext, context);
+                }
 
                 if (value != null)
                 {
                     property.SetValue(instance, value, null);
                 }
+                else
+                {
+                    nullProperties++;
+                }
             }
-            return instance;
+            return totalProperties == nullProperties ? null : instance;
         }
 
         public bool CanBind(Type type)
         {
-            return type.IsClass;
+            return type.IsClass &&
+                !type.IsGenericType;
         }
 
         IEnumerable<PropertyInfo> GetProperties(
@@ -48,7 +65,7 @@ namespace SimpleBinder.ModelBinder
             return type.GetProperties(
                 BindingFlags.Instance |
                 BindingFlags.SetProperty |
-                BindingFlags.GetProperty | 
+                BindingFlags.GetProperty |
                 BindingFlags.Public);
         }
     }

@@ -25,11 +25,13 @@ namespace SimpleBinder.ValueProvider
             }
         }
 
-        public string GetValue(
+        public object GetValue(
             BindingContext bindingContext, 
             ModelContext modelContext)
         {
-            return this.queryStringProvider.GetValue(bindingContext, modelContext);
+            return this.queryStringProvider.GetValue(
+                bindingContext, 
+                modelContext);
         }
     }
 }

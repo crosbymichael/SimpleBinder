@@ -50,7 +50,6 @@
     <Compile Include="ModelBinders.cs" />
     <Compile Include="ModelBinder\ComplexModelBinder.cs" />
     <Compile Include="ModelBinder\ListModelBinder.cs" />
-    <Compile Include="ModelBinder\SimpleModelBinder.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="QueryStringConverter.cs" />
     <Compile Include="Utils.cs" />

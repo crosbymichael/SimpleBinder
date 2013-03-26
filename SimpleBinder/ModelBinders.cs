@@ -37,8 +37,8 @@ namespace SimpleBinder
 
         void RegisterDefaultBinders()
         {
-            Register<SimpleModelBinder>();
             Register<ComplexModelBinder>();
+            Register<ListModelBinder>();
         }
 
         public void Register<T>()
@@ -52,13 +52,10 @@ namespace SimpleBinder
             ModelContext context)
         {
             var binder = context.DefaultBinder();
-            if (binder == null)
+            var converter = new QueryStringConverter();
+            if (binder == null && !converter.CanConvert(context.ModelType))
             {
                 binder = this.binders.SingleOrDefault(b => b.CanBind(context.ModelType));
-                if (binder == null)
-                {
-                    throw new NotSupportedException("Binder could not be found.");
-                }
             }
             return binder;
         }

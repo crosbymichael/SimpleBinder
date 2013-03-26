@@ -23,17 +23,21 @@ namespace SimpleBinder.ModelBinder
 
         public bool Iterate()
         {
-            return this.FailedCount == 5;
+            return this.FailedCount < 5;
         }
     }
 
-    abstract class ListModelBinder : IModelBinder
+    class ListModelBinder : IModelBinder
     {
         protected virtual string GetTemplate(
             ModelContext context)
         {
-
-            return "{propertyName}{iteration}";
+            var template = context.GetTemplate();
+            if (string.IsNullOrEmpty(template))
+            {
+                template = "{contextName}{iteration}";
+            }
+            return template;
         }
 
         public object BindModel(
@@ -47,12 +51,12 @@ namespace SimpleBinder.ModelBinder
             var context = new ModelContext
             {
                 ModelType = instance.GetType().GetGenericArguments().Single(),
+                Name = name
             };
 
             bindingContext = new ListBindingContext(
                 bindingContext, 
                 GetTemplate(context), 
-                name, 
                 iterator);
 
             Action<object> add = o =>
@@ -63,7 +67,7 @@ namespace SimpleBinder.ModelBinder
 
             while (iterator.Iterate())
             {
-                var value = GetValue(bindingContext, context);
+                var value = GetValue(bindingContext as ListBindingContext, context);
 
                 if (value != null)
                 {
@@ -81,80 +85,37 @@ namespace SimpleBinder.ModelBinder
         public bool CanBind(
             Type type)
         {
-            if (type == typeof(List<>) ||
-                type == typeof(IEnumerable<>) ||
-                type == typeof(ICollection<>))
+            if (type.IsGenericType)
             {
-                var genericType = type.GetGenericArguments().Single();
-                return CanBindGenericType(genericType);
+                type = type.GetGenericTypeDefinition();
+
+                if (type == typeof(List<>) ||
+                    type == typeof(IEnumerable<>) ||
+                    type == typeof(ICollection<>))
+                {
+                    return true;
+                }
             }
             return false;
         }
-
-        protected abstract bool CanBindGenericType(Type genericType);
-
-        protected abstract object GetValue(BindingContext bindingContext, ModelContext modelContext);
 
         object CreateInstance(Type type)
         {
             type = typeof(List<>).MakeGenericType(type.GetGenericArguments());
             return Activator.CreateInstance(type);
         }
-    }
 
-    class SimpleListModelBinder : ListModelBinder
-    {
-        SimpleModelBinder simpleModelBinder;
-
-        public SimpleListModelBinder()
-        {
-            this.simpleModelBinder = new SimpleModelBinder();
-        }
-
-        protected override object GetValue(
-            BindingContext bindingContext, 
+        object GetValue(
+            ListBindingContext bindingContext,
             ModelContext modelContext)
         {
-            return this.simpleModelBinder.BindModel(
-                bindingContext, 
-                modelContext);
-        }
-
-        protected override bool CanBindGenericType(
-            Type genericType)
-        {
-            return this.simpleModelBinder.CanBind(genericType);
-        }
-    }
-
-    class ComplexListModelBinder : ListModelBinder
-    {
-        ComplexModelBinder modelBinder;
-
-        public ComplexListModelBinder()
-        {
-            this.modelBinder = new ComplexModelBinder();
-        }
-
-        protected override bool CanBindGenericType(
-            Type genericType)
-        {
-            return this.modelBinder.CanBind(genericType);
-        }
-
-        protected override object GetValue(
-            BindingContext bindingContext, 
-            ModelContext modelContext)
-        {
-            var defaultBinder = modelContext.DefaultBinder();
-            if (defaultBinder == null)
+            var valueProvider = bindingContext.ValueProvider;
+            var binder = ModelBinders.Binders.GetBinder(modelContext);
+            if (binder == null)
             {
-                defaultBinder = this.modelBinder;
+                return valueProvider.GetValue(bindingContext, modelContext); 
             }
-
-
-
-            return defaultBinder.BindModel(bindingContext, modelContext);
+            return binder.BindModel(bindingContext, modelContext);
         }
     }
 }

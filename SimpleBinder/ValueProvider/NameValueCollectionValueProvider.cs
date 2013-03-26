@@ -9,8 +9,10 @@ namespace SimpleBinder.ValueProvider
     public class NameValueCollectionValueProvider : IValueProvider
     {
         NameValueCollection collection;
+        QueryStringConverter converter;
 
-        public NameValueCollectionValueProvider(NameValueCollection collection)
+        public NameValueCollectionValueProvider(
+            NameValueCollection collection)
         {
             if (collection == null)
             {
@@ -18,14 +20,25 @@ namespace SimpleBinder.ValueProvider
             }
 
             this.collection = collection;
+            this.converter = new QueryStringConverter();
         }
 
-        public string GetValue(
+        public object GetValue(
             BindingContext bindingContext, 
             ModelContext modelContext)
         {
             var key = bindingContext.GetKey(modelContext);
-            return this.collection.Get(key);
+            var rawValue = this.collection.Get(key);
+
+            if (string.IsNullOrEmpty(rawValue))
+            {
+                return modelContext.ModelType.IsValueType ?
+                    Activator.CreateInstance(modelContext.ModelType) :
+                    null;
+            }
+            return this.converter.ConvertStringToValue(
+                rawValue, 
+                modelContext.ModelType);
         }
     }
 }
