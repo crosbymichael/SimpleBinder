@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -43,6 +44,12 @@ namespace SimpleBinder.ModelBinder
 
                 if (value != null)
                 {
+                    if (value is IEnumerable && 
+                        !(value as IEnumerable).GetEnumerator().MoveNext())
+                    {
+                        // Treat an empty list as a null property
+                        nullProperties++;
+                    }
                     property.SetValue(instance, value, null);
                 }
                 else

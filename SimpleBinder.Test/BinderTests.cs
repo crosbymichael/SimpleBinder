@@ -36,6 +36,24 @@ namespace SimpleBinder.Test
         public IEnumerable<PersonWithTempate> familymembers { get; set; }
     }
 
+    [Template("fri_{iteration}_{contextName}")]
+    class Friend
+    {
+        public string name { get; set; }
+    }
+
+    [Template("mem_{iteration}_{contextName}")]
+    class PersonWithFriends : Person
+    {
+        public IEnumerable<Friend> friends { get; set; }
+    }
+
+    class FamilyWithFriends
+    {
+        public string lastname { get; set; }
+        public IEnumerable<PersonWithFriends> familymembers { get; set; }
+    }
+
     [TestClass]
     public class BinderTests
     {
@@ -95,6 +113,26 @@ namespace SimpleBinder.Test
 
             var michael = model.familymembers.Single(m => m.name == "michael");
             Assert.AreEqual(34, michael.age);
+
+            var koye = model.familymembers.Single(m => m.name == "koye");
+            Assert.AreEqual(2, koye.age);
+        }
+
+        [TestMethod]
+        public void TestComplexListWithSubList()
+        {
+            string value = "lastname=crosby&mem_1_name=michael&mem_1_age=34&mem_2_name=koye&mem_2_age=2&mem_1_fri_1_name=sam&mem_1_fri_2_name=matt";
+
+            var model = Binder.Bind<FamilyWithFriends>(new QueryStringValueProvider(value));
+            Assert.IsNotNull(model);
+
+            Assert.AreEqual(2, model.familymembers.Count());
+            Assert.AreEqual("crosby", model.lastname);
+
+            var michael = model.familymembers.Single(m => m.name == "michael");
+            Assert.AreEqual(34, michael.age);
+            Assert.AreEqual(2, michael.friends.Count());
+
 
             var koye = model.familymembers.Single(m => m.name == "koye");
             Assert.AreEqual(2, koye.age);

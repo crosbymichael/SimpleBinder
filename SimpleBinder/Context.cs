@@ -85,6 +85,7 @@ namespace SimpleBinder
     {
         string template;
         Iterator iterator;
+        ListBindingContext parent;
 
         public ListBindingContext(
             BindingContext context,
@@ -99,13 +100,51 @@ namespace SimpleBinder
 
             this.template = template;
             this.iterator = iterator;
+            if (context is ListBindingContext)
+            {
+                this.parent = context as ListBindingContext;
+            }
         }
 
         public int Iteration { get { return this.iterator.CurrentIteration; } }
+        
+        public string CreateTemplateFromContext(
+            ModelContext context)
+        {
+            return Utils.ReplaceWithProperties(
+                this.template,
+                new
+                {
+                    iteration = this.Iteration,
+                    contextName = "{contextName}"
+                });
+        }
 
         public override string GetKey(
             ModelContext context)
         {
+            if (parent != null)
+            {
+                var template = this.parent.CreateTemplateFromContext(context);
+
+                var name = Utils.ReplaceWithProperties(
+                    this.template,
+                    new
+                    {
+                        iteration = this.Iteration,
+                        contextName = context.Name
+                    });
+                
+                var key = Utils.ReplaceWithProperties(
+                    template,
+                    new
+                    {
+                        contextName = name
+                    });
+
+                return key;
+            }
+
             return Utils.ReplaceWithProperties(
                 this.template,
                 new 
